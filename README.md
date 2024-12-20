@@ -12,6 +12,4 @@ Flexibility & Customization: Tailor pages to fit unique business requirements.
 Automation of Tasks: Execute repetitive operations efficiently.
 Improved Efficiency: Handle front-end validations without waiting for round trips to the server.
 
-# Essential JavaScript Utility Functions for Oracle Apex
-
-Eg. apex.custom.utils.debug.log("Interactive Grid Loading…");
+### Shared few of the Page level and Interactive Grid related Utlity scripts
