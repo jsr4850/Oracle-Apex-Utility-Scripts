@@ -12,4 +12,6 @@ Flexibility & Customization: Tailor pages to fit unique business requirements.
 Automation of Tasks: Execute repetitive operations efficiently.
 Improved Efficiency: Handle front-end validations without waiting for round trips to the server.
 
-### Shared few of the Page level and Interactive Grid related Utlity scripts
+* Shared few of the Page level and Interactive Grid related Utlity scripts
+    apexUtils.js
+    igUtils.js
