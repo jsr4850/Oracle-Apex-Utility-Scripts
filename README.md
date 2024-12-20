@@ -13,5 +13,5 @@ Automation of Tasks: Execute repetitive operations efficiently.
 Improved Efficiency: Handle front-end validations without waiting for round trips to the server.
 
 * Shared few of the Page level and Interactive Grid related Utlity scripts
-**apexUtils.js
-**igUtils.js
+* 1. apexUtils.js
+* 2. igUtils.js
