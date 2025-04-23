@@ -1,281 +1,251 @@
-///////////////////////////////////////////////////////////////////////////
-//   NAME:       igUtils.js
-//   PURPOSE:    Javascript apex utility functions
-//   VERSION:    1.0.0
-//
-//   Copyright (c) 2024 [Satwik]
-//
-//   Permission is hereby granted, free of charge, to any person obtaining a copy
-//   of this software and associated documentation files (the "Software"), to deal
-//   in the Software without restriction, including without limitation the rights
-//   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//   copies of the Software, and to permit persons to whom the Software is
-//   furnished to do so, subject to the following conditions:
-//
-//   The above copyright notice and this permission notice shall be included in all
-//   copies or substantial portions of the Software.
-//
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//   SOFTWARE.
-////////////////////////////////////////////////////////////////////////////
+/**
+ * @fileoverview JavaScript utility functions for Oracle APEX Interactive Grids
+ * @version 2.0.0
+ * @copyright 2025 Satwik
+ * @license MIT
+ */
 
-if (apex && apex.custom && apex.custom.igUtil) {
-    throw 'Collision detected for apex.custom.igUtil';
+// Prevent namespace collision
+if (apex?.custom?.igUtil) {
+    throw new Error('Collision detected for apex.custom.igUtil');
 }
 
-var apex = apex || {};
+const apex = apex || {};
 apex.custom = apex.custom || {};
 apex.custom.igUtil = {};
 
-(function(igUtil, $, customUtils, console, undefined) {
+((igUtil, $) => {
+    'use strict';
 
-    "use strict";
+    /**
+     * Gets selected record IDs from an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     * @returns {string[]} Array of selected record IDs
+     */
+    igUtil.getSelectedRecordIdsArray = igId => {
+        const ig = apex.region(igId);
+        const igWidget = ig.widget();
+        const igGrid = igWidget.interactiveGrid('getViews', 'grid');
+        const igModel = igGrid.model;
+        
+        return igGrid.getSelectedRecords()
+            .map(record => igModel.getRecordId(record));
+    };
 
-    ////////////////////////////////////////////////////////////////////////////
-
-    igUtil.getSelectedRecordIdsArray = function getSelectedRecordIdsArray(pIgId) {
-        var ig_ = apex.region(pIgId);
-        var igWidget = ig_.widget();
-        var igGrid = igWidget.interactiveGrid('getViews', 'grid');
-        var igModel = igGrid.model;
-        var selectedRecords = igGrid.getSelectedRecords();
-        var selectedRecordIds = [];
-
-        selectedRecords.forEach(function(rec, idx) {
-            selectedRecordIds.push(igModel.getRecordId(rec));
-        });
-
-        return selectedRecordIds;
-    }; //getSelectedRecordIdsArray
-    ////////////////////////////////////////////////////////////////////////////
-
-    igUtil.getSelectedRecordIdsString = function getSelectedRecordIdsString(pIgId, pRecordSeparator, pComponentSeprarator) {
-        var componentSeprarator = pComponentSeprarator || ';';
-        var recordSeparator = pRecordSeparator || ':';
-        var selectedRecordIdsArray = igUtil.getSelectedRecordIdsArray(pIgId);
-        var firstElement = selectedRecordIdsArray[0];
-        var selectedRecordIdsString;
-
-        if (Array.isArray(firstElement)) {
-            selectedRecordIdsArray.forEach(function(recId, idx) {
-                selectedRecordIdsArray[idx] = selectedRecordIdsArray[idx].join(componentSeprarator);
-            });
-        }
-
-        selectedRecordIdsString = selectedRecordIdsArray.join(recordSeparator);
-
-        return selectedRecordIdsString;
-    }; //getSelectedRecordIdsString
-    ////////////////////////////////////////////////////////////////////////////
-
-    igUtil.getCurrentPageRecordIdsArray = function getCurrentPageRecordIdsArray(pIgId) {
-        var ig_ = apex.region(pIgId);
-        var igWidget = ig_.widget();
-        var igCurrentPageTrs$ = igWidget.find('.a-GV-w-scroll tr.a-GV-row[data-id]');
-        var currentPageRecordIds = [];
-
-
-        igCurrentPageTrs$.each(function(idx, tr) {
-            currentPageRecordIds.push($(tr).data('id'));
-        });
-
-        return currentPageRecordIds;
-    }; //getCurrentPageRecordIdsArray
-    ////////////////////////////////////////////////////////////////////////////
-
-    igUtil.getCurrentPageRecordIdsString = function getCurrentPageRecordIdsString(pIgId, pRecordSeparator, pComponentSeprarator) {
-        var componentSeprarator = pComponentSeprarator || ';';
-        var recordSeparator = pRecordSeparator || ':';
-        var currentPageRecordIdsArray = igUtil.getCurrentPageRecordIdsArray(pIgId);
-        var firstElement = currentPageRecordIdsArray[0];
-        var currentPageRecordIdsString;
+    /**
+     * Gets selected record IDs as a formatted string
+     * @param {string} igId - The Interactive Grid region ID
+     * @param {string} [recordSeparator=':'] - Separator between records
+     * @param {string} [componentSeparator=';'] - Separator between components
+     * @returns {string} Formatted string of record IDs
+     */
+    igUtil.getSelectedRecordIdsString = (igId, recordSeparator = ':', componentSeparator = ';') => {
+        const selectedIds = igUtil.getSelectedRecordIdsArray(igId);
+        const firstElement = selectedIds[0];
 
         if (Array.isArray(firstElement)) {
-            currentPageRecordIdsArray.forEach(function(recId, idx) {
-                currentPageRecordIdsArray[idx] = currentPageRecordIdsArray[idx].join(componentSeprarator);
-            });
+            return selectedIds
+                .map(recId => recId.join(componentSeparator))
+                .join(recordSeparator);
         }
 
-        currentPageRecordIdsString = currentPageRecordIdsArray.join(recordSeparator);
+        return selectedIds.join(recordSeparator);
+    };
 
-        return currentPageRecordIdsString;
-    }; //getCurrentPageRecordIdsString
-    ////////////////////////////////////////////////////////////////////////////
+    /**
+     * Gets all record IDs from the current page of an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     * @returns {string[]} Array of record IDs from current page
+     */
+    igUtil.getCurrentPageRecordIdsArray = igId => {
+        const ig = apex.region(igId);
+        const igWidget = ig.widget();
+        const currentPageRows = igWidget.find('.a-GV-w-scroll tr.a-GV-row[data-id]');
+        
+        return Array.from(currentPageRows)
+            .map(row => $(row).data('id'));
+    };
 
-    igUtil.getAllRecordIdsArray = function getAllRecordIdsArray(pIgId) {
-        var ig_ = apex.region(pIgId);
-        var igWidget = ig_.widget();
-        var igGrid = igWidget.interactiveGrid('getViews', 'grid');
-        var igModel = igGrid.model;
-        var allRecordIds = [];
+    /**
+     * Gets current page record IDs as a formatted string
+     * @param {string} igId - The Interactive Grid region ID
+     * @param {string} [recordSeparator=':'] - Separator between records
+     * @param {string} [componentSeparator=';'] - Separator between components
+     * @returns {string} Formatted string of record IDs
+     */
+    igUtil.getCurrentPageRecordIdsString = (igId, recordSeparator = ':', componentSeparator = ';') => {
+        const currentPageIds = igUtil.getCurrentPageRecordIdsArray(igId);
+        const firstElement = currentPageIds[0];
 
-        var deferred$ = $.Deferred(function(defer) {
+        if (Array.isArray(firstElement)) {
+            return currentPageIds
+                .map(recId => recId.join(componentSeparator))
+                .join(recordSeparator);
+        }
 
-            igModel.fetchAll(function(pStatus) {
-                if (pStatus.done) {
-                    igModel.forEach(function(pRec, pIdx, pId) {
-                        allRecordIds.push(pId);
-                    });
+        return currentPageIds.join(recordSeparator);
+    };
 
-                    defer.resolve(allRecordIds);
+    /**
+     * Gets all record IDs from an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     * @returns {Promise<string[]>} Promise resolving to array of all record IDs
+     */
+    igUtil.getAllRecordIdsArray = igId => {
+        const ig = apex.region(igId);
+        const igWidget = ig.widget();
+        const igGrid = igWidget.interactiveGrid('getViews', 'grid');
+        const igModel = igGrid.model;
+
+        return new Promise((resolve) => {
+            igModel.fetchAll(status => {
+                if (status.done) {
+                    const allRecordIds = [];
+                    igModel.forEach((_, __, id) => allRecordIds.push(id));
+                    resolve(allRecordIds);
                 }
             });
-
         });
+    };
 
-        return deferred$.promise();
-
-    }; //getAllRecordIdsArray
-    ////////////////////////////////////////////////////////////////////////////
-
-    igUtil.getAllRecordIdsString = function getAllRecordIdsString(pIgId, pRecordSeparator, pComponentSeprarator) {
-        var componentSeprarator = pComponentSeprarator || ';';
-        var recordSeparator = pRecordSeparator || ':';
-        var deferred$ = $.Deferred(function(defer) {
-
-            var recordsPromise = igUtil.getAllRecordIdsArray(pIgId);
-
-            recordsPromise.then(function (allRecordIdsArray) {
-                var firstElement = allRecordIdsArray[0];
-                var allRecordIdsString;
+    /**
+     * Gets all record IDs as a formatted string
+     * @param {string} igId - The Interactive Grid region ID
+     * @param {string} [recordSeparator=':'] - Separator between records
+     * @param {string} [componentSeparator=';'] - Separator between components
+     * @returns {Promise<string>} Promise resolving to formatted string of record IDs
+     */
+    igUtil.getAllRecordIdsString = (igId, recordSeparator = ':', componentSeparator = ';') => {
+        return igUtil.getAllRecordIdsArray(igId)
+            .then(allRecordIds => {
+                const firstElement = allRecordIds[0];
 
                 if (Array.isArray(firstElement)) {
-                    allRecordIdsArray.forEach(function(recId, idx) {
-                        allRecordIdsArray[idx] = allRecordIdsArray[idx].join(componentSeprarator);
-                    });
+                    return allRecordIds
+                        .map(recId => recId.join(componentSeparator))
+                        .join(recordSeparator);
                 }
 
-                allRecordIdsString = allRecordIdsArray.join(recordSeparator);
-
-                defer.resolve(allRecordIdsString);
+                return allRecordIds.join(recordSeparator);
             });
+    };
 
-        });
-
-        return deferred$.promise();
-    }; //getAllRecordIdsString
-    ////////////////////////////////////////////////////////////////////////////
-
-    igUtil.checkRowsAreSelected = function checkRowsAreSelected(pIgId) {
-        var ig_ = apex.region(pIgId);
-        var igWidget = ig_.widget();
-        var igGrid = igWidget.interactiveGrid('getViews', 'grid');
-
+    /**
+     * Checks if any rows are selected in an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     * @returns {boolean} True if rows are selected, false otherwise
+     */
+    igUtil.checkRowsAreSelected = igId => {
+        const ig = apex.region(igId);
+        const igWidget = ig.widget();
+        const igGrid = igWidget.interactiveGrid('getViews', 'grid');
         return igGrid.getSelectedRecords().length > 0;
     };
 
-    ////////////////////////////////////////////////////////////////////////////
-    igUtil.refreshChangedRecords =  function refreshChangedRecords(pIgId) {
-    let changedRecords = []
-    let igModel = apex.region(pIgId).call('getViews', 'grid').model;
-    let igChanged = igModel.getChanges();
-
-    for (i = 0; i < igChanged.length ; i++) { 
-        changedRecords.push (igChanged[i].record);
-    }
-
-    igModel.fetchRecords(changedRecords);
+    /**
+     * Refreshes changed records in an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     */
+    igUtil.refreshChangedRecords = igId => {
+        const igModel = apex.region(igId).call('getViews', 'grid').model;
+        const changedRecords = igModel.getChanges()
+            .map(change => change.record);
+        
+        igModel.fetchRecords(changedRecords);
     };
 
-    ////////////////////////////////////////////////////////////////////////////
-    igUtil.refreshSelectedRecords =  function refreshSelectedRecords(pIgId) {
-  
-    let igRegion        = apex.region(pIgId);
-    let igModel         = igRegion.call('getViews', 'grid').model;
-    let selectedRecords = igRegion.call('getSelectedRecords'); // Fetch selected records
-
-    igModel.fetchRecords(selectedRecords); // Refresh Both selected records
+    /**
+     * Refreshes selected records in an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     */
+    igUtil.refreshSelectedRecords = igId => {
+        const igRegion = apex.region(igId);
+        const igModel = igRegion.call('getViews', 'grid').model;
+        const selectedRecords = igRegion.call('getSelectedRecords');
+        
+        igModel.fetchRecords(selectedRecords);
     };
 
+    /**
+     * Sets filters on an Interactive Grid
+     * @param {string} regionId - The Interactive Grid region ID
+     * @param {string[]} columns - Array of column names
+     * @param {string[]} values - Array of filter values
+     */
+    igUtil.setIGFilters = (regionId, columns, values) => {
+        const region = apex.region(regionId);
+        const inst = region.call("instance");
+        const filters = region.call("getFilters");
+        const options = { save: false };
+        let changed = false;
 
+        const idMap = columns.reduce((map, col) => {
+            const column = inst._getColumnByName(col);
+            if (column) map[column.id] = col;
+            return map;
+        }, {});
 
-    ////////////////////////////////////////////////////////////////////////////
-    //Only deals with setting column filters using equal operator, case insensitive
-    //An empty string value removes the filter.
-    //columns and values are arrays and must have same length
-    //eg., - apex.custom.igUtil.setIGFilters("issues", ["APPLICATION_ID", "PAGE_ID", "STATUS"],[ p1_app, p1_page, "Open" ]);
-    ////////////////////////////////////////////////////////////////////////////
-    igUtil.setIGFilters =  function setIGFilters( regionId, columns, values ) {
-        var i, filter, col, val, id, curVal,
-        colMap = {},
-        idMap = {},
-        changed = false,
-        region = apex.region(regionId),
-        inst = region.call("instance"),
-        filters = region.call("getFilters"),
-        options = { save: false };
+        const colMap = filters.reduce((map, filter) => {
+            if (filter.type === "column" && filter.operator === "EQ" && idMap[filter.columnId]) {
+                map[idMap[filter.columnId]] = {
+                    id: filter.id,
+                    val: filter.value
+                };
+            }
+            return map;
+        }, {});
 
-    for (i = 0; i < columns.length; i++) {
-        col = columns[i];
-        if (inst._getColumnByName(col)) {
-            id = inst._getColumnByName(col).id;
-            idMap[id] = col;
-        }
-    }
+        columns.forEach((col, i) => {
+            const val = values[i];
+            const existing = colMap[col];
+            const id = existing?.id;
+            const curVal = existing?.val;
 
-    for (i = 0; i < filters.length; i++) {
-        filter = filters[i];
-        if (filter.type === "column" && filter.operator === "EQ" && idMap[filter.columnId]) {
-            colMap[idMap[filter.columnId]] = {
-                id: filter.id,
-                val: filter.value
-            };
-        }
-    }
+            if (val !== "") {
+                const filter = {
+                    type: "column",
+                    columnType: "column",
+                    operator: "EQ",
+                    value: val,
+                    isCaseSensitive: false
+                };
 
-    for (i = 0; i < columns.length; i++) {
-        col = columns[i];
-        val = values[i];
-        id = curVal = null;
-        if (colMap[col]) {
-            id = colMap[col].id;
-            curVal = colMap[col].val;
-        }
-        if (val !== "") { 
-            filter = {
-                   type: "column",
-                   columnType: "column",
-                   operator: "EQ",
-                   value: val,
-                   isCaseSensitive: false
-            };
-            if (id) {
-                if (val !== curVal) {
-                    region.call("updateFilter", id, filter, options);
+                if (id) {
+                    if (val !== curVal) {
+                        region.call("updateFilter", id, filter, options);
+                        changed = true;
+                    }
+                } else {
+                    filter.columnName = col;
+                    region.call("addFilter", filter, options);
                     changed = true;
                 }
-            } else {
-                filter.columnName = col;
-                region.call("addFilter", filter, options);
+            } else if (id) {
+                region.call("deleteFilter", id, options);
                 changed = true;
             }
-        } else if ( id ) {
-            region.call("deleteFilter", id, options);
-            changed = true;
+        });
+
+        if (changed) {
+            inst._setReportSettings({});
         }
-    }
-    if (changed) {
-        inst._setReportSettings({});
-    }
-};
-////////////////////////////////////////////////////////////////////////////
-/// Change Column Names
-////////////////////////////////////////////////////////////////////////////
+    };
 
-    igUtil.changeColumnName = function changeColumnName(pIgId, columnName, newHeading) {
-        var ig_ = apex.region(pIgId);
-        var igView = ig_.call("getCurrentView").view$;
+    /**
+     * Changes the heading of a column in an Interactive Grid
+     * @param {string} igId - The Interactive Grid region ID
+     * @param {string} columnName - The name of the column to change
+     * @param {string} newHeading - The new heading text
+     */
+    igUtil.changeColumnName = (igId, columnName, newHeading) => {
+        const igView = apex.region(igId).call("getCurrentView").view$;
+        const column = igView.grid("getColumns")
+            .find(column => column.property === columnName);
+        
+        if (column) {
+            column.heading = newHeading;
+            igView.grid("refreshColumns").grid("refresh");
+        }
+    };
 
-        igView.grid("getColumns").filter((column) => column.property == columnName)[0].heading = newHeading;
-        igView.grid("refreshColumns").grid("refresh");
-    }; 
-    //changeColumnName
-    
-///////////////////////////////////////////////////////////////////////////
-
-})(apex.custom.igUtil, apex.jQuery, window.customUtils, window.console);
+})(apex.custom.igUtil, apex.jQuery);
